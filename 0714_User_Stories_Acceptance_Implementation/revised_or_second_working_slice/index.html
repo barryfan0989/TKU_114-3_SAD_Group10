@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TKU吉他社 - 社費預約繳費與電子收據管理系統</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;800&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="glow-bg"></div>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="brand">
+                <i class="fa-solid fa-guitar brand-logo"></i>
+                <div class="brand-text">
+                    <h1>TKU GUITAR</h1>
+                    <p>社費預約繳費與電子收據管理系統</p>
+                </div>
+            </div>
+            <!-- Role Switcher -->
+            <div class="role-switcher">
+                <button class="role-btn active" data-tab="member-view">
+                    <i class="fa-solid fa-user-tag"></i> 一般社員
+                </button>
+                <button class="role-btn" data-tab="officer-view">
+                    <i class="fa-solid fa-user-shield"></i> 財務後台
+                </button>
+                <button class="role-btn" data-tab="president-view">
+                    <i class="fa-solid fa-chart-line"></i> 社長看板
+                </button>
+                <button class="role-btn" data-tab="receipt-view">
+                    <i class="fa-solid fa-receipt"></i> 收據查驗
+                </button>
+            </div>
+            <!-- Date Simulator (第二切片新增) -->
+            <div class="date-simulator-wrapper">
+                <i class="fa-solid fa-calendar-days text-blue"></i>
+                <label for="system-sim-date">系統模擬日期：</label>
+                <input type="date" id="system-sim-date" class="sim-date-input">
+            </div>
+        </header>
+
+        <!-- Notification Toast -->
+        <div id="toast" class="toast hidden"></div>
+
+        <!-- MAIN VIEWS -->
+        <main>
+            <!-- 1. 一般社員 View -->
+            <section id="member-view" class="view-panel active">
+                <div class="grid-2col">
+                    <!-- Form Card -->
+                    <div class="card glass">
+                        <div class="card-header">
+                            <i class="fa-solid fa-file-signature text-purple"></i>
+                            <h2>社費繳款預約登記</h2>
+                        </div>
+                        <p class="card-subtitle">請填寫基本資料並選擇社費繳交方案，送出後取得預約編號至社課現場繳納現金。</p>
+                        
+                        <form id="reservation-form" onsubmit="handleReservationSubmit(event)">
+                            <div class="form-group">
+                                <label for="member-student-id">學號 <span class="required">*</span></label>
+                                <div class="input-icon-wrapper">
+                                    <i class="fa-solid fa-id-card"></i>
+                                    <input type="text" id="member-student-id" placeholder="例如：D1120456" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="member-name">姓名 <span class="required">*</span></label>
+                                <div class="input-icon-wrapper">
+                                    <i class="fa-solid fa-user"></i>
+                                    <input type="text" id="member-name" placeholder="例如：蔡同學" required>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>選擇繳費方案 <span class="required">*</span></label>
+                                <div class="scheme-options">
+                                    <!-- Scheme 1: Half Year -->
+                                    <label class="scheme-card">
+                                        <input type="radio" name="payment-scheme" value="half" checked onclick="updateAmount(500)">
+                                        <div class="scheme-info">
+                                            <span class="scheme-title">半年期社費</span>
+                                            <span class="scheme-price">NT$ 500</span>
+                                            <span class="scheme-desc">適用於單學期參與社員</span>
+                                        </div>
+                                    </label>
+                                    <!-- Scheme 2: Full Year -->
+                                    <label class="scheme-card">
+                                        <input type="radio" name="payment-scheme" value="full" onclick="updateAmount(900)">
+                                        <div class="scheme-info">
+                                            <span class="scheme-title">一年期社費</span>
+                                            <span class="scheme-price text-highlight">NT$ 900</span>
+                                            <span class="scheme-desc">超值推薦！全學年活動均可參與</span>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="price-summary">
+                                <span>應付金額：</span>
+                                <span class="amount-val" id="summary-amount">NT$ 500</span>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-block">
+                                <i class="fa-solid fa-paper-plane"></i> 送出預約
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Status / Instructions Card -->
+                    <div class="card glass flex-column">
+                        <div class="card-header">
+                            <i class="fa-solid fa-circle-info text-blue"></i>
+                            <h2>我的繳費預約狀態</h2>
+                        </div>
+                        
+                        <!-- Empty state -->
+                        <div id="no-reservation-state" class="empty-state">
+                            <i class="fa-regular fa-folder-open"></i>
+                            <p>輸入上方學號預約後，此處將即時呈現您的最新繳費進度與狀態卡片。</p>
+                        </div>
+
+                        <!-- Active reservation details -->
+                        <div id="active-reservation-state" class="reservation-details hidden">
+                            <div class="status-card" id="member-status-card">
+                                <div class="status-card-header">
+                                    <span class="res-label">最新預約進度</span>
+                                    <span class="badge" id="member-badge">待繳費</span>
+                                </div>
+                                <div class="status-card-body">
+                                    <div class="stat-row">
+                                        <span class="lbl">預約編號</span>
+                                        <span class="val font-mono" id="member-res-id">-</span>
+                                    </div>
+                                    <div class="stat-row">
+                                        <span class="lbl">方案名稱</span>
+                                        <span class="val" id="member-res-scheme">-</span>
+                                    </div>
+                                    <div class="stat-row">
+                                        <span class="lbl">應付金額</span>
+                                        <span class="val text-highlight" id="member-res-amount">-</span>
+                                    </div>
+                                    <div class="stat-row">
+                                        <span class="lbl">預約日期</span>
+                                        <span class="val" id="member-res-date">-</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="info-alert" id="member-info-alert">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                                <span id="member-instruction-text">請於 7 天內前往社課現場繳納現金給財務幹部，逾期預約將會自動失效。</span>
+                            </div>
+
+                            <button class="btn btn-secondary btn-block hidden" id="view-my-receipt-btn">
+                                <i class="fa-solid fa-receipt"></i> 查看電子收據
+                            </button>
+                        </div>
+
+                        <div class="flow-steps">
+                            <h3>繳費三步驟</h3>
+                            <div class="step-list">
+                                <div class="step-item">
+                                    <div class="step-num">1</div>
+                                    <div class="step-content">
+                                        <h4>線上預約方案</h4>
+                                        <p>填寫學號姓名，選擇半年或一年方案並取得預約編號。</p>
+                                    </div>
+                                </div>
+                                <div class="step-item">
+                                    <div class="step-num">2</div>
+                                    <div class="step-content">
+                                        <h4>現場收現確認</h4>
+                                        <p>至社課現場支付現金給財務幹部，由幹部一鍵登記收款。</p>
+                                    </div>
+                                </div>
+                                <div class="step-item">
+                                    <div class="step-num">3</div>
+                                    <div class="step-content">
+                                        <h4>電子收據查驗</h4>
+                                        <p>完成後免拿紙本，隨時登入系統查驗並下載電子收據備查。</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. 財務後台 View -->
+            <section id="officer-view" class="view-panel">
+                <div class="card glass">
+                    <div class="card-header">
+                        <i class="fa-solid fa-cash-register text-purple"></i>
+                        <h2>財務收款確認後台</h2>
+                        <div class="badge-operator">
+                            <i class="fa-solid fa-user-tie"></i> 經辦人：林同學 (財務)
+                        </div>
+                    </div>
+                    <p class="card-subtitle">收到社員現金時，請在此頁面輸入學號/姓名模糊搜尋預約，並進行「一鍵確認收款」。</p>
+
+                    <!-- Filter / Search Section -->
+                    <div class="toolbar">
+                        <div class="search-box">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" id="search-input" placeholder="輸入學號、姓名或預約編號搜尋..." oninput="handleSearch()">
+                        </div>
+                        <div class="filter-group">
+                            <button class="filter-btn active" data-filter="all" onclick="setFilter('all')">全部</button>
+                            <button class="filter-btn" data-filter="待繳費" onclick="setFilter('待繳費')">待繳費</button>
+                            <button class="filter-btn" data-filter="已繳費" onclick="setFilter('已繳費')">已繳費</button>
+                            <button class="filter-btn" data-filter="已逾期" onclick="setFilter('已逾期')">已逾期</button>
+                        </div>
+                    </div>
+
+                    <!-- Reservations Table Container -->
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>預約編號</th>
+                                    <th>學號</th>
+                                    <th>姓名</th>
+                                    <th>方案 (點擊切換)</th>
+                                    <th>金額</th>
+                                    <th>預約日期</th>
+                                    <th>狀態</th>
+                                    <th style="text-align: center;">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reservations-table-body">
+                                <!-- JS items will render here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. 社長看板 View -->
+            <section id="president-view" class="view-panel">
+                <!-- Metrics Row -->
+                <div class="metrics-grid">
+                    <div class="metric-card glass">
+                        <div class="metric-icon bg-purple">
+                            <i class="fa-solid fa-percent"></i>
+                        </div>
+                        <div class="metric-info">
+                            <h3 id="president-payment-rate">0%</h3>
+                            <p>整體繳費率</p>
+                        </div>
+                        <div class="metric-progress-wrapper">
+                            <div class="metric-progress-bar" id="payment-progress-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="metric-card glass">
+                        <div class="metric-icon bg-green">
+                            <i class="fa-solid fa-hand-holding-dollar"></i>
+                        </div>
+                        <div class="metric-info">
+                            <h3 id="president-total-paid">NT$ 0</h3>
+                            <p>實收社費總額</p>
+                        </div>
+                    </div>
+
+                    <div class="metric-card glass">
+                        <div class="metric-icon bg-orange">
+                            <i class="fa-solid fa-hourglass-half"></i>
+                        </div>
+                        <div class="metric-info">
+                            <h3 id="president-total-pending">NT$ 0</h3>
+                            <p>待繳預估金額</p>
+                        </div>
+                    </div>
+
+                    <div class="metric-card glass">
+                        <div class="metric-icon bg-red">
+                            <i class="fa-solid fa-circle-xmark"></i>
+                        </div>
+                        <div class="metric-info">
+                            <h3 id="president-total-overdue">0 人</h3>
+                            <p>已逾期預約數</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid-2col margin-top">
+                    <!-- Paid list -->
+                    <div class="card glass">
+                        <div class="card-header border-green">
+                            <span class="bullet bg-green"></span>
+                            <h2>已繳費社員清冊 (即時更新)</h2>
+                        </div>
+                        <div class="list-container" id="president-paid-list">
+                            <!-- JS Items -->
+                        </div>
+                    </div>
+
+                    <!-- Unpaid and Overdue lists stacked (第二切片拆分) -->
+                    <div class="flex-column" style="gap: 1.5rem;">
+                        <!-- 待繳費名冊 -->
+                        <div class="card glass">
+                            <div class="card-header border-orange">
+                                <span class="bullet bg-orange"></span>
+                                <h2>待繳費社員清冊</h2>
+                            </div>
+                            <div class="list-container" id="president-pending-list">
+                                <!-- JS Items -->
+                            </div>
+                        </div>
+                        
+                        <!-- 逾期關懷名冊 -->
+                        <div class="card glass">
+                            <div class="card-header border-red">
+                                <span class="bullet bg-red"></span>
+                                <h2>逾期關懷名冊 (已逾期)</h2>
+                            </div>
+                            <div class="list-container" id="president-overdue-list">
+                                <!-- JS Items -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4. 收據查驗 View -->
+            <section id="receipt-view" class="view-panel">
+                <div class="card glass narrow-card">
+                    <div class="card-header">
+                        <i class="fa-solid fa-receipt text-purple"></i>
+                        <h2>電子收據線上查驗</h2>
+                    </div>
+                    <p class="card-subtitle">請輸入社員學號，系統將在核對繳費狀態後即時顯示電子收據憑證以供備查。</p>
+
+                    <div class="search-form-row">
+                        <div class="input-icon-wrapper flex-grow">
+                            <i class="fa-solid fa-id-card"></i>
+                            <input type="text" id="query-student-id" placeholder="請輸入學號，如 D1120456">
+                        </div>
+                        <button class="btn btn-primary" onclick="queryReceipt()">
+                            <i class="fa-solid fa-magnifying-glass"></i> 查驗
+                        </button>
+                    </div>
+
+                    <!-- Query Result Area -->
+                    <div id="receipt-result" class="margin-top">
+                        <!-- Receipt template rendering -->
+                        <div class="empty-state">
+                            <i class="fa-solid fa-search"></i>
+                            <p>請在上方輸入學號，查驗對帳與收據資訊。</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer>
+            <p>© 115 學年度 淡江大學吉他社 TKU Guitar. All rights reserved.</p>
+            <p>系統開發與設計：SAD第10組 (范植翔) | 僅供學術成果原型展示</p>
+        </footer>
+    </div>
+</body>
+<script src="app.js"></script>
+</html>
