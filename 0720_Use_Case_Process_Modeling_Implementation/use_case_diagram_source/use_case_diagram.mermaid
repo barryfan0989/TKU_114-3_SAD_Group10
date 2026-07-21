@@ -1,0 +1,33 @@
+flowchart LR
+    %% Actors
+    Student([一般社員])
+    Officer([財務幹部])
+    President([社長])
+
+    subgraph System[吉他社社費預約繳費與電子收據管理系統]
+        %% Use Cases
+        UC1([UC-01 預約繳費方案])
+        UC2([UC-02 取消待繳預約])
+        UC3([UC-03 搜尋與篩選預約])
+        UC4([UC-04 確認收取現付])
+        UC5([UC-05 作廢已繳款收據])
+        UC6([UC-06 查驗電子收據])
+        UC7([UC-07 掌握繳費與催繳分析])
+
+        %% Relationships within boundary
+        UC2 -. "<<extend>>\n(條件: 預約未付款)" .-> UC1
+        UC4 -. "<<include>>" .-> UC3
+        UC5 -. "<<extend>>\n(條件: 收據需退款或作廢)" .-> UC4
+    end
+
+    %% Actor to Use Case Associations
+    Student --- UC1
+    Student --- UC2
+    Student --- UC6
+
+    Officer --- UC3
+    Officer --- UC4
+    Officer --- UC5
+    Officer --- UC6
+
+    President --- UC7

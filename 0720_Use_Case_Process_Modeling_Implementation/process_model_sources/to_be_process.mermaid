@@ -1,0 +1,59 @@
+flowchart TD
+    subgraph Student[一般社員]
+        A[1. 填寫學號與姓名] --> B[2. 送出選定方案預約]
+        B --> C[3. 於狀態面板取得 RES- 編號]
+        C --> D[4. 攜帶現金至現場繳交]
+        D --> E[5. 收取並登入查詢電子收據]
+        E --> F[6. 下載或列印憑證核銷]
+        F --> G([7. 流程結束])
+    end
+
+    subgraph System[吉他社社費繳費系統]
+        S1{8. 檢查是否符合資格與重複預約 BR-02}
+        S2[9. 建立待繳紀錄並組裝 RES- 流水號]
+        S3[10. 提供模糊搜尋與篩選]
+        S4{11. 一鍵確認或作廢控制}
+        S5[12. 記錄林同學經辦與分秒時間戳記]
+        S6[13. 生成電子收據及加蓋財務收訖章]
+        S7[14. 自動逾期計算與社長名冊拆分]
+    end
+
+    subgraph Officer[財務幹部]
+        O1[15. 收取現金並模糊檢索預約]
+        O2[16. 現場快速切換變更方案]
+        O3[17. 點選一鍵確認收款]
+        O4[18. 發現錯誤時點選作廢收據]
+    end
+
+    subgraph President[社長]
+        P1[19. 載入社長看板視圖]
+        P2[20. 即時取得繳費率與實收/待收金額]
+        P3[21. 依已繳/待繳/逾期/作廢名冊精準催繳]
+    end
+
+    %% Flow transitions
+    B --> S1
+    S1 -- 符合 --> S2
+    S1 -- 不符合/重複 --> A
+    S2 --> C
+    D --> O1
+    O1 --> S3
+    S3 --> O2
+    O2 --> O3
+    O3 --> S4
+    S4 -- 一鍵確認 --> S5
+    S5 --> S6
+    S6 --> E
+    
+    %% Exception/Voiding path
+    S6 --> O4
+    O4 --> S4
+    S4 -- 作廢收據 --> S7
+    
+    %% Dashboard and date simulation
+    S7 --> P1
+    P1 --> P2
+    P2 --> P3
+    
+    classDef sysClass fill:#e1f5fe,stroke:#0288d1,stroke-width:1px,color:#01579b;
+    class S1,S2,S3,S4,S5,S6,S7 sysClass;

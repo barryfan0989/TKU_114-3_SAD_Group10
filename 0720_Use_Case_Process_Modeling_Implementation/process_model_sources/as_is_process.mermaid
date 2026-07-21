@@ -1,0 +1,54 @@
+flowchart TD
+    subgraph Student[一般社員]
+        A[1. 看到社費繳納通知] --> B[2. 透過 Messenger 詢問方案與名額]
+        B --> C[3. 等待財務回覆]
+        C --> D[4. 現場排隊並填寫登記表單]
+        D --> E[5. 支付現金給財務幹部]
+        E --> F[6. 收取手寫紙本收據]
+        F --> G([7. 流程結束])
+    end
+
+    subgraph Officer[財務幹部]
+        H[8. 接收詢問訊息] --> I[9. 人工核對名額與方案]
+        I --> J[10. 回覆社員訊息]
+        K[11. 現場核對社員預約登記] --> L[12. 現場收取現金並找零]
+        L --> M[13. 手寫紙本三聯單收據]
+        M --> N[14. 人工登錄 Excel 記帳]
+        N --> O[15. 彙整紙本收據副本]
+    end
+
+    subgraph President[社長]
+        P[16. 欲規劃活動預算] --> Q[17. 要求財務提供繳費清單]
+        Q --> R[18. 手動加總已繳社費金額]
+        R --> S[19. 逐一比對社員名冊以找出未繳學員]
+    end
+
+    subgraph ExtraCurric[課外活動組]
+        T[20. 社團評鑑審查財務憑證]
+    end
+
+    %% Data and Message Exchanges (Pain points highlighted)
+    B -.-> H
+    J -.-> C
+    D -.-> K
+    O -.-> T
+    Q -.-> N
+    
+    %% Pain points notations
+    style B stroke:#ef4444,stroke-width:2px
+    style K stroke:#ef4444,stroke-width:2px
+    style Q stroke:#ef4444,stroke-width:2px
+    style M stroke:#ef4444,stroke-width:2px
+    
+    linkStyle 1 stroke:#ef4444,stroke-width:2px;
+    linkStyle 9 stroke:#ef4444,stroke-width:2px;
+    linkStyle 16 stroke:#ef4444,stroke-width:2px;
+    
+    classDef painPoint fill:#fde8e8,stroke:#ef4444,stroke-width:1px,color:#9b1c1c;
+    class B,K,Q,M painPoint;
+    
+    %% Annotation labels
+    click B href "P-01: 詢問名額效率低下，訊息易被淹沒"
+    click K href "P-02: Excel 資料分散，現場核對容易出錯"
+    click M href "P-03: 手寫收據易遺失，不易核銷"
+    click Q href "P-04: 無法即時統計繳費率與名單，催繳困難"
